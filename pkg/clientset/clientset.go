@@ -2,7 +2,7 @@ package clientset
 
 import (
 	"fmt"
-	"github.com/martin-helmich/kubernetes-crd-example/clientset/v1alpha1"
+	"github.com/martin-helmich/kubernetes-crd-example/pkg/clientset/v1alpha1"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"

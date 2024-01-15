@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	projectCrd "github.com/martin-helmich/kubernetes-crd-example/pkg/api/types/v1alpha1"
+	projectClient "github.com/martin-helmich/kubernetes-crd-example/pkg/clientset"
 	"log"
 	"time"
 
@@ -10,8 +12,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	projectCrd "github.com/martin-helmich/kubernetes-crd-example/api/types/v1alpha1"
-	projectClient "github.com/martin-helmich/kubernetes-crd-example/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
