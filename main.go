@@ -6,12 +6,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/martin-helmich/kubernetes-crd-example/api/types/v1alpha1"
-	clientV1alpha1 "github.com/martin-helmich/kubernetes-crd-example/clientset/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	projectCrd "github.com/martin-helmich/kubernetes-crd-example/api/types/v1alpha1"
+	projectClient "github.com/martin-helmich/kubernetes-crd-example/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var kubeconfig string
@@ -22,14 +23,17 @@ func init() {
 }
 
 func main() {
+
 	var config *rest.Config
 	var err error
 
 	if kubeconfig == "" {
 		log.Printf("using in-cluster configuration")
+		// return a *rest.Config
 		config, err = rest.InClusterConfig()
 	} else {
 		log.Printf("using configuration from '%s'", kubeconfig)
+		// return *rest.Config
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	}
 
@@ -37,21 +41,25 @@ func main() {
 		panic(err)
 	}
 
-	v1alpha1.AddToScheme(scheme.Scheme)
+	// register the Project and ProjectList schema structures
+	projectCrd.AddToScheme(scheme.Scheme)
 
-	clientSet, err := clientV1alpha1.NewForConfig(config)
+	// get a customresource client from the given config
+	projectClientSet, err := projectClient.NewForConfig(config)
+
 	if err != nil {
 		panic(err)
 	}
 
-	projects, err := clientSet.Projects("default").List(metav1.ListOptions{})
+	projectList, err := projectClientSet.ProjectsCrdV1Alpha1().Projects("default").List(metav1.ListOptions{})
+
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("projects found: %+v\n", projects)
+	fmt.Printf("projects found: %+v\n", projectList)
 
-	store := WatchResources(clientSet)
+	store := WatchResources(*projectClientSet.ProjectsCrdV1Alpha1(), "default")
 
 	for {
 		projectsFromStore := store.List()

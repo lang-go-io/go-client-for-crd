@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"github.com/martin-helmich/kubernetes-crd-example/api/types/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -8,7 +9,11 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-type ProjectInterface interface {
+type ProjectsGetter interface {
+	Projects(namespace string) ProjectsInterface
+}
+
+type ProjectsInterface interface {
 	List(opts metav1.ListOptions) (*v1alpha1.ProjectList, error)
 	Get(name string, options metav1.GetOptions) (*v1alpha1.Project, error)
 	Create(*v1alpha1.Project) (*v1alpha1.Project, error)
@@ -16,57 +21,67 @@ type ProjectInterface interface {
 	// ...
 }
 
-type projectClient struct {
-	restClient rest.Interface
-	ns         string
+// projects implements the ProjectInterface
+type projects struct {
+	client rest.Interface
+	ns     string
 }
 
-func (c *projectClient) List(opts metav1.ListOptions) (*v1alpha1.ProjectList, error) {
+func newProjects(c *CustomResourceV1Client, namespace string) *projects {
+	return &projects{
+		client: c.RESTClient(),
+		ns:     namespace,
+	}
+}
+
+// implement the functions of ProjectInterface interface
+
+func (p *projects) List(opts metav1.ListOptions) (*v1alpha1.ProjectList, error) {
 	result := v1alpha1.ProjectList{}
-	err := c.restClient.
+	err := p.client.
 		Get().
-		Namespace(c.ns).
+		Namespace(p.ns).
 		Resource("projects").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Do().
+		Do(context.TODO()).
 		Into(&result)
 
 	return &result, err
 }
 
-func (c *projectClient) Get(name string, opts metav1.GetOptions) (*v1alpha1.Project, error) {
+func (p *projects) Get(name string, opts metav1.GetOptions) (*v1alpha1.Project, error) {
 	result := v1alpha1.Project{}
-	err := c.restClient.
+	err := p.client.
 		Get().
-		Namespace(c.ns).
+		Namespace(p.ns).
 		Resource("projects").
 		Name(name).
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Do().
+		Do(context.TODO()).
 		Into(&result)
 
 	return &result, err
 }
 
-func (c *projectClient) Create(project *v1alpha1.Project) (*v1alpha1.Project, error) {
+func (p *projects) Create(project *v1alpha1.Project) (*v1alpha1.Project, error) {
 	result := v1alpha1.Project{}
-	err := c.restClient.
+	err := p.client.
 		Post().
-		Namespace(c.ns).
+		Namespace(p.ns).
 		Resource("projects").
 		Body(project).
-		Do().
+		Do(context.TODO()).
 		Into(&result)
 
 	return &result, err
 }
 
-func (c *projectClient) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (p *projects) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 	opts.Watch = true
-	return c.restClient.
+	return p.client.
 		Get().
-		Namespace(c.ns).
+		Namespace(p.ns).
 		Resource("projects").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Watch()
+		Watch(context.TODO())
 }
